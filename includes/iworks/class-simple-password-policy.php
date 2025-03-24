@@ -29,6 +29,13 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 
 	private $capability;
 
+	/**
+	 * User column key for Password Strength Indicator
+	 *
+	 * @since 1.0.0
+	 */
+	private string $user_column_password_strength_score_name = 'simple-password-policy-password-strength-score';
+
 	public function __construct() {
 		parent::__construct();
 		$this->version    = 'PLUGIN_VERSION';
@@ -38,6 +45,9 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 */
 		add_action( 'admin_init', array( $this, 'action_admin_init' ) );
 		add_action( 'init', array( $this, 'action_init_settings' ) );
+		add_action( 'manage_users_custom_column', array( $this, 'action_manage_users_custom_column_add_password_strength' ), 10, 3 );
+		add_filter( 'authenticate', array( $this, 'filter_authenticate' ), 1, 3 );
+		add_filter( 'manage_users_columns', array( $this, 'filter_manage_users_columns_add_password_strength' ) );
 		/**
 		 * load github class
 		 */
@@ -46,6 +56,10 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 			include_once $filename;
 			new iworks_simple_password_policy_github();
 		}
+		/**
+		 * iWorks Options Class Hooks
+		 */
+		add_filter( 'iworks_simple_password_policy_options', array( $this, 'filter_options_add_roles' ) );
 		/**
 		 * is active?
 		 */
@@ -233,4 +247,116 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 	 */
 	private function db_install() {
 	}
+
+
+	/**
+	 * Get roles list to options.
+	 *
+	 * @since 1.0.0
+	 */
+	public function filter_options_add_roles( $options ) {
+		global $wp_roles;
+		if ( $wp_roles->roles && is_array( $wp_roles->roles ) ) {
+			$roles = array();
+			foreach( $wp_roles->roles as $role => $role_data ) {
+				$roles[$role] = translate_user_role( $role_data['name'] );
+			}
+			asort( $roles);
+			$options['options']['roles']['options'] = $roles;
+		}
+		return $options;
+	}
+
+	/**
+	 * Function to add custom verification after user login
+	 *
+	 * @param string $user user object.
+	 * @param string $username username of user.
+	 * @param string $password password of user.
+	 * @return object
+	 */
+	public function filter_authenticate( $user, $username, $password ) {
+		$error = new WP_Error();
+		if ( empty( $username ) ) {
+			$error->add( 'empty_username', __( '<strong>ERROR</strong>: Username is empty.', 'simple-password-policy' ) );
+		}
+		if ( empty( $password ) ) {
+			$error->add( 'empty_password', __( '<strong>ERROR</strong>:Password is empty.', 'simple-password-policy' ) );
+		}
+		if ( is_email( $username ) ) {
+			$user = wp_authenticate_email_password( $user, $username, $password );
+		} else {
+			$user = wp_authenticate_username_password( $user, $username, $password );
+		}
+		$currentuser = $user;
+		if ( is_wp_error( $currentuser ) ) {
+			$error->add( 'invalid_username_password', '<strong>' . __( 'ERROR', 'simple-password-policy' ) . '</strong>: ' . __( 'Invalid Username or password.', 'simple-password-policy' ) );
+			return $currentuser;
+		}
+		if ( is_wp_error( $user ) ) {
+			$error->add( 'empty_username', __( '<strong>ERROR</strong>: Invalid username or Password.', 'simple-password-policy' ) );
+			return $user;
+		}
+		global $moppm_db_queries;
+		$log_time     = gmdate( 'M j, Y, g:i:s a' );
+		$log_out_time = gmdate( 'M j, Y, g:i:s a' );
+		$user_id      = $currentuser->ID;
+		if ( get_site_option( 'Moppm_enable_disable_ppm' ) === 'on' ) {
+			if ( get_user_meta( $user->ID, 'moppm_points' ) ) {
+				$this->moppm_send_reset_link( $currentuser->user_email, $user->ID, $user );
+				$error->add( 'Reset Password', '<strong>' . __( 'ERROR', 'simple-password-policy' ) . '</strong>: ' . __( 'Reset password link has been sent in your email please check.', 'simple-password-policy' ) );
+				return $error;
+			}
+			if ( get_site_option( 'moppm_enable_disable_expiry' ) ) {
+				$user_time     = get_user_meta( $user->ID, 'moppm_last_pass_timestmp' );
+				$tstamp        = isset( $user_time[0] ) ? $user_time[0] : 0;
+				$current_time  = time();
+				$start_time    = $current_time - $tstamp;
+				$get_save_time = get_site_option( 'moppm_expiration_time' ) * 7 * 24 * 3600;
+				if ( ! get_user_meta( $user->ID, 'moppm_last_pass_timestmp' ) || ( $start_time > $get_save_time && get_site_option( 'moppm_expiration_time' ) ) ) {
+					moppm_reset_pass_form( $user );
+					exit();
+				}
+			}
+			if ( 'VALID' !== Moppm_Utility::validate_password( $password ) && get_site_option( 'moppm_first_reset' ) === '1' && ! get_user_meta( $user->ID, 'moppm_first_reset' ) ) {
+				moppm_reset_pass_form( $user );
+				exit();
+			}
+		}
+
+		if ( get_site_option( 'moppm_enable_disable_report' ) === 'on' ) {
+			$moppm_db_queries->insert_report_list( $user_id, $user->user_email, $log_time, $log_out_time );
+		}
+
+		return $currentuser;
+	}
+
+	/**
+	 * Function to add one column 'Password Strength Score' in user table.
+	 *
+	 * @param array $columns column.
+	 * @return array
+	 */
+	public function filter_manage_users_columns_add_password_strength( $columns ) {
+		$columns[$this->user_column_password_strength_score_name] = esc_html__( 'Password Strength Score', 'simple-password-policy' );
+		return $columns;
+	}
+
+	/**
+	 * Function to add content to custom row in user table
+	 *
+	 * @param string $value data to add in user table.
+	 * @param string $column_name column in which we add custom data.
+	 * @param int    $user_id user_id for which we want to add data in custom column.
+	 * @return string
+	 */
+	public function action_manage_users_custom_column_add_password_strength( $value, $column_name, $user_id ) {
+		$moppm_score = get_user_meta( $user_id, 'moppm_pass_score' );
+
+		if ( $this->user_column_password_strength_score_name === $column_name && ! empty( $moppm_score[0] ) ) {
+			$moppm_score = intval( $moppm_score[0] );
+			return ( '<span style="margin-left:30%;">' . esc_html( $moppm_score ) . ' <span>' );
+		}
+		return 'N/A';
+}
 }

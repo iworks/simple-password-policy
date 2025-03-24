@@ -52,19 +52,6 @@ if ( ! class_exists( 'iworks_options' ) ) {
 	require_once $vendor . '/iworks/options/options.php';
 }
 /**
- * load posttypes - change to `__return_true' to load
- */
-add_filter( 'simple-password-policy/load/posttype/faq', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/hero', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/opinion', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/page', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/person', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/post', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/project', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/promo', '__return_false' );
-add_filter( 'simple-password-policy/load/posttype/publication', '__return_false' );
-
-/**
  * load options
  */
 function iworks_simple_password_policy_get_options() {
@@ -78,7 +65,7 @@ function iworks_simple_password_policy_get_options() {
 	if ( method_exists( $iworks_simple_password_policy_options, 'set_plugin' ) ) {
 		$iworks_simple_password_policy_options->set_plugin( basename( __FILE__ ) );
 	}
-	$iworks_simple_password_policy_options->init();
+	$iworks_simple_password_policy_options->options_init();
 	return $iworks_simple_password_policy_options;
 }
 
