@@ -13,6 +13,20 @@ PLUGIN_TAGLINE
 
 == Description ==
 
+Enhance the security of your WordPress site with the Simple Password Policy plugin. This straightforward tool allows you to enforce robust password policies for all users, significantly improving your site's protection against unauthorized access and password guessing attacks.
+
+= Key Features =
+
+* **Password Length Requirement**: Set a minimum length for passwords to prevent short, easily guessable passwords.
+* **Character Variety**: Require passwords to include a mix of uppercase and lowercase letters, numbers, and special characters.
+* **Password Expiration**: Set passwords to expire after a specified period, prompting users to update their passwords regularly.
+
+= Benefits =
+
+* **Improved Security**: Protect your site from brute-force attacks and unauthorized access by enforcing strong password policies.
+* **Compliance**: Meet security standards by implementing robust password policies.
+* **User Guidance**: Help users create strong, unique passwords with clear instructions.
+
 = GitHub =
 
 The Simple Password Policy plugin is available also on [GitHub - Simple Password Policy](https://github.com/iworks/simple-password-policy).

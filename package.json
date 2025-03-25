@@ -1,11 +1,15 @@
 {
     "name": "simple-password-policy",
     "title": "Simple Password Policy",
-    "tagline": "Simple Password Policy",
-    "description": "Simple Password Policy",
+    "tagline": "Secure Your Site with Strong Passwords",
+    "description": "Enhance the security of your WordPress site with the Simple Password Policy plugin. This straightforward tool allows you to enforce robust password policies for all users, significantly improving your site's protection against unauthorized access and password guessing attacks.",
     "version": "0.0.1",
     "homepage": "http://simple-password-policy.iworks.pl/",
     "tags": [
+        "password",
+        "password policy",
+        "policy",
+        "security"
     ],
     "author": [
         {
