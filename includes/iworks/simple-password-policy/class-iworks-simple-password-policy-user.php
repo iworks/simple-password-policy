@@ -73,8 +73,8 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 				$value  = sprintf( '<span aria-hidden="true">%d</span>', $score );
 				$value .= sprintf(
 					'<span class="screen-reader-text">%s</span>',
-					// translators: %d score of the user password
 					sprintf(
+						// translators: %d score of the user password
 						_n( '%d point by this password', '%d points by this password', $score, 'simple-password-policy' ),
 						$score
 					)

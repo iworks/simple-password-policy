@@ -45,7 +45,6 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 */
 		add_action( 'admin_init', array( $this, 'action_admin_init' ) );
 		add_action( 'init', array( $this, 'action_init_settings' ) );
-		add_filter( 'authenticate', array( $this, 'filter_authenticate' ), 1, 3 );
 		/**
 		 * load plugin classes class
 		 */
@@ -74,85 +73,7 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 
 	public function action_admin_init() {
 		$this->check_option_object();
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
-	}
-
-	public function admin_enqueue_scripts() {
-		$screen = get_current_screen();
-		/**
-		 * off on not simple-password-policy pages
-		 */
-		$re = sprintf( '/%s_/', __CLASS__ );
-		if ( ! preg_match( $re, $screen->id ) ) {
-			return;
-		}
-		/**
-		 * datepicker
-		 */
-		$file = 'assets/externals/datepicker/css/jquery-ui-datepicker.css';
-		$file = plugins_url( $file, $this->base );
-		wp_register_style( 'jquery-ui-datepicker', $file, false, '1.12.1' );
-		/**
-		 * select2
-		 */
-		$file = 'assets/externals/select2/css/select2.min.css';
-		$file = plugins_url( $file, $this->base );
-		wp_register_style( 'select2', $file, false, '4.0.3' );
-		/**
-		 * Admin styles
-		 */
-		$file    = sprintf( '/assets/styles/admin%s.css', $this->dev );
-		$version = $this->get_version( $file );
-		$file    = plugins_url( $file, $this->base );
-		wp_register_style( 'admin-simple-password-policy', $file, array( 'jquery-ui-datepicker', 'select2' ), $version );
-		wp_enqueue_style( 'admin-simple-password-policy' );
-		/**
-		 * select2
-		 */
-		wp_register_script( 'select2', plugins_url( 'assets/externals/select2/js/select2.full.min.js', $this->base ), array(), '4.0.3' );
-		/**
-		 * Admin scripts
-		 */
-		$files = array(
-			'simple-password-policy-admin' => sprintf( 'assets/scripts/admin/admin%s.js', $this->dev ),
-		);
-		if ( '' == $this->dev ) {
-			$files = array(
-				'simple-password-policy-admin-datepicker' => 'assets/scripts/admin/src/datepicker.js',
-				'simple-password-policy-admin-select2'    => 'assets/scripts/admin/src/select2.js',
-				'simple-password-policy-admin-media-library' => 'assets/scripts/admin/src/media-library.js',
-			);
-		}
-		$deps = array(
-			'jquery-ui-datepicker',
-			'select2',
-		);
-		foreach ( $files as $handle => $file ) {
-			wp_register_script(
-				$handle,
-				plugins_url( $file, $this->base ),
-				$deps,
-				$this->get_version(),
-				true
-			);
-			wp_enqueue_script( $handle );
-		}
-		/**
-		 * JavaScript messages
-		 *
-		 * @since 1.0.0
-		 */
-		$data = array(
-			'messages' => array(),
-			'nonces'   => array(),
-			'user_id'  => get_current_user_id(),
-		);
-		wp_localize_script(
-			'simple_password_policy_admin',
-			__CLASS__,
-			apply_filters( 'wp_localize_script_simple_password_policy_admin', $data )
-		);
 	}
 
 	/**
@@ -271,70 +192,6 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 			$options['options']['roles']['options'] = $roles;
 		}
 		return $options;
-	}
-
-	/**
-	 * Function to add custom verification after user login
-	 *
-	 * @param string $user user object.
-	 * @param string $username username of user.
-	 * @param string $password password of user.
-	 * @return object
-	 */
-	public function filter_authenticate( $user, $username, $password ) {
-		$error = new WP_Error();
-		if ( empty( $username ) ) {
-			$error->add( 'empty_username', __( '<strong>ERROR</strong>: Username is empty.', 'simple-password-policy' ) );
-		}
-		if ( empty( $password ) ) {
-			$error->add( 'empty_password', __( '<strong>ERROR</strong>:Password is empty.', 'simple-password-policy' ) );
-		}
-		if ( is_email( $username ) ) {
-			$user = wp_authenticate_email_password( $user, $username, $password );
-		} else {
-			$user = wp_authenticate_username_password( $user, $username, $password );
-		}
-		$currentuser = $user;
-		if ( is_wp_error( $currentuser ) ) {
-			$error->add( 'invalid_username_password', '<strong>' . __( 'ERROR', 'simple-password-policy' ) . '</strong>: ' . __( 'Invalid Username or password.', 'simple-password-policy' ) );
-			return $currentuser;
-		}
-		if ( is_wp_error( $user ) ) {
-			$error->add( 'empty_username', __( '<strong>ERROR</strong>: Invalid username or Password.', 'simple-password-policy' ) );
-			return $user;
-		}
-		global $moppm_db_queries;
-		$log_time     = gmdate( 'M j, Y, g:i:s a' );
-		$log_out_time = gmdate( 'M j, Y, g:i:s a' );
-		$user_id      = $currentuser->ID;
-		if ( get_site_option( 'Moppm_enable_disable_ppm' ) === 'on' ) {
-			if ( get_user_meta( $user->ID, 'moppm_points' ) ) {
-				$this->moppm_send_reset_link( $currentuser->user_email, $user->ID, $user );
-				$error->add( 'Reset Password', '<strong>' . __( 'ERROR', 'simple-password-policy' ) . '</strong>: ' . __( 'Reset password link has been sent in your email please check.', 'simple-password-policy' ) );
-				return $error;
-			}
-			if ( get_site_option( 'moppm_enable_disable_expiry' ) ) {
-				$user_time     = get_user_meta( $user->ID, 'moppm_last_pass_timestmp' );
-				$tstamp        = isset( $user_time[0] ) ? $user_time[0] : 0;
-				$current_time  = time();
-				$start_time    = $current_time - $tstamp;
-				$get_save_time = get_site_option( 'moppm_expiration_time' ) * 7 * 24 * 3600;
-				if ( ! get_user_meta( $user->ID, 'moppm_last_pass_timestmp' ) || ( $start_time > $get_save_time && get_site_option( 'moppm_expiration_time' ) ) ) {
-					moppm_reset_pass_form( $user );
-					exit();
-				}
-			}
-			if ( 'VALID' !== Moppm_Utility::validate_password( $password ) && get_site_option( 'moppm_first_reset' ) === '1' && ! get_user_meta( $user->ID, 'moppm_first_reset' ) ) {
-				moppm_reset_pass_form( $user );
-				exit();
-			}
-		}
-
-		if ( get_site_option( 'moppm_enable_disable_report' ) === 'on' ) {
-			$moppm_db_queries->insert_report_list( $user_id, $user->user_email, $log_time, $log_out_time );
-		}
-
-		return $currentuser;
 	}
 
 }
