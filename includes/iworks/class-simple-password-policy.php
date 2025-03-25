@@ -30,11 +30,11 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 	private $capability;
 
 	/**
-	 * User column key for Password Strength Indicator
+	 * Plugin Objects
 	 *
 	 * @since 1.0.0
 	 */
-	private string $user_column_password_strength_score_name = 'simple-password-policy-password-strength-score';
+	private array $objects = array();
 
 	public function __construct() {
 		parent::__construct();
@@ -45,9 +45,15 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 */
 		add_action( 'admin_init', array( $this, 'action_admin_init' ) );
 		add_action( 'init', array( $this, 'action_init_settings' ) );
-		add_action( 'manage_users_custom_column', array( $this, 'action_manage_users_custom_column_add_password_strength' ), 10, 3 );
 		add_filter( 'authenticate', array( $this, 'filter_authenticate' ), 1, 3 );
-		add_filter( 'manage_users_columns', array( $this, 'filter_manage_users_columns_add_password_strength' ) );
+		/**
+		 * load plugin classes class
+		 */
+		foreach ( array( 'user', 'password' ) as $class_key ) {
+			include_once $this->includes_directory . '/class-iworks-simple-password-policy-' . $class_key . '.php';
+			$class_name                  = sprintf( 'iworks_simple_password_policy_%s', $class_key );
+			$this->objects[ $class_key ] = new $class_name();
+		}
 		/**
 		 * load github class
 		 */
@@ -258,10 +264,10 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		global $wp_roles;
 		if ( $wp_roles->roles && is_array( $wp_roles->roles ) ) {
 			$roles = array();
-			foreach( $wp_roles->roles as $role => $role_data ) {
-				$roles[$role] = translate_user_role( $role_data['name'] );
+			foreach ( $wp_roles->roles as $role => $role_data ) {
+				$roles[ $role ] = translate_user_role( $role_data['name'] );
 			}
-			asort( $roles);
+			asort( $roles );
 			$options['options']['roles']['options'] = $roles;
 		}
 		return $options;
@@ -331,32 +337,4 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		return $currentuser;
 	}
 
-	/**
-	 * Function to add one column 'Password Strength Score' in user table.
-	 *
-	 * @param array $columns column.
-	 * @return array
-	 */
-	public function filter_manage_users_columns_add_password_strength( $columns ) {
-		$columns[$this->user_column_password_strength_score_name] = esc_html__( 'Password Strength Score', 'simple-password-policy' );
-		return $columns;
-	}
-
-	/**
-	 * Function to add content to custom row in user table
-	 *
-	 * @param string $value data to add in user table.
-	 * @param string $column_name column in which we add custom data.
-	 * @param int    $user_id user_id for which we want to add data in custom column.
-	 * @return string
-	 */
-	public function action_manage_users_custom_column_add_password_strength( $value, $column_name, $user_id ) {
-		$moppm_score = get_user_meta( $user_id, 'moppm_pass_score' );
-
-		if ( $this->user_column_password_strength_score_name === $column_name && ! empty( $moppm_score[0] ) ) {
-			$moppm_score = intval( $moppm_score[0] );
-			return ( '<span style="margin-left:30%;">' . esc_html( $moppm_score ) . ' <span>' );
-		}
-		return 'N/A';
-}
 }

@@ -72,6 +72,20 @@ class iworks_simple_password_policy_base {
 	 */
 	protected $options;
 
+	/**
+	 * user meta name for password score
+	 *
+	 * @since 1.0.0
+	 */
+	protected string $user_meta_name_password_score = 'spp_pass_score';
+
+	/**
+	 * user meta name for password reason to change
+	 *
+	 * @since 1.0.0
+	 */
+	protected string $user_meta_name_password_reason_to_change = 'spp_pass_reason';
+
 	public function __construct() {
 		/**
 		 * static settings
