@@ -72,14 +72,15 @@ module.exports = function(grunt) {
 	var conf = {
 		// Concatenate those JS files into a single file (target: [source, source, ...]).
 		js_files_concat: {
-			'assets/scripts/<%= pkg.name %>-frontend.js': [
-				'assets/scripts/src/frontend/*.js',
+			'assets/scripts/<%= pkg.name %>-login.js': [
+				'assets/scripts/src/login/*.js',
 			],
 		},
 
 		// SASS files to process. Resulting CSS files will be minified as well.
-		css_files_compile: {},
-		css_files_concat: {},
+		css_files_compile: {
+			'assets/styles/login/requirements.css': 'assets/sass/login/requirements.scss',
+		},
 
 		replace_patterns: [{
 			match: /AUTHOR_NAME/g,
@@ -270,6 +271,10 @@ module.exports = function(grunt) {
 			admin: {
 				src: ['assets/styles/admin/*.css'],
 				dest: 'assets/styles/<%= pkg.name %>-admin.css'
+			},
+			login: {
+				src: ['assets/styles/login/*.css'],
+				dest: 'assets/styles/<%= pkg.name %>-login.css'
 			}
 		},
 
@@ -355,7 +360,6 @@ module.exports = function(grunt) {
 						'report-msgid-bugs-to': 'http://iworks.pl',
 						'x-poedit-keywordslist': true // Include a list of all possible gettext functions.
 					},
-					exclude: ['node_modules', '.git', '.sass-cache', 'release'],
 					type: 'wp-plugin',
 					updateTimestamp: true,
 					updatePoFiles: true
@@ -491,7 +495,7 @@ module.exports = function(grunt) {
 			'copy:wporg',
 			'replace',
 			'compress:wporg'
-		],
+		]
 	);
 	grunt.registerTask(
 		'build:github',

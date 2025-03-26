@@ -45,6 +45,8 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 */
 		add_action( 'admin_init', array( $this, 'action_admin_init' ) );
 		add_action( 'init', array( $this, 'action_init_settings' ) );
+		add_action( 'login_enqueue_scripts', array( $this, 'action_login_enqueue_scripts_enqueue_assets' ) );
+		add_action( 'login_enqueue_scripts', array( $this, 'action_login_enqueue_scripts_register_assets' ), 0 );
 		/**
 		 * load plugin classes class
 		 */
@@ -71,6 +73,63 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		add_filter( 'simple-password-policy/is_active', '__return_true' );
 	}
 
+	/**
+	 * register assets for login screen
+	 *
+	 * @since 1.0.0
+	 */
+	public function action_login_enqueue_scripts_register_assets() {
+		$this->check_option_object();
+		/**
+		 * Cascading Style Sheets
+		 */
+		$handle = $this->slug_name( $this->options->get_option_name( 'login' ) );
+		$file   = sprintf(
+			'assets/styles/simple-password-policy-login%s.css',
+			$this->dev
+		);
+		$file   = plugins_url( $file, dirname( $this->base ) );
+		wp_register_style( $handle, $file, false, $this->get_version() );
+		/**
+		 * JavaScripts
+		 */
+		$file = sprintf(
+			'assets/scripts/simple-password-policy-login%s.js',
+			$this->dev
+		);
+		$file = plugins_url( $file, dirname( $this->base ) );
+		wp_register_script( $handle, $file, false, $this->get_version() );
+	}
+
+	/**
+	 * equeue assets for login screen
+	 *
+	 * @since 1.0.0
+	 */
+	public function action_login_enqueue_scripts_enqueue_assets() {
+		$handle = $this->slug_name( $this->options->get_option_name( 'login' ) );
+		wp_enqueue_style( $handle );
+		wp_enqueue_script( $handle );
+		wp_localize_script(
+			$handle,
+			preg_replace( '/-/', '_', $this->options->get_option_name( 'data' ) ),
+			apply_filters(
+				'iworks/simple-password-policy/login/script',
+				array(
+					'conditions' => array(),
+					'fields'     => array(
+						'ids' => array(
+							'pass1',
+						),
+					),
+					'list'       => array(
+						'id' => 'iworks_simple-password-policy_conditions',
+					),
+				)
+			)
+		);
+	}
+
 	public function action_admin_init() {
 		$this->check_option_object();
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
@@ -86,11 +145,6 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 * options
 		 */
 		$this->check_option_object();
-		if ( is_admin() ) {
-		} else {
-			$file = 'assets/styles/simple_password_policy' . $this->dev . '.css';
-			wp_enqueue_style( 'simple-password-policy', plugins_url( $file, $this->base ), array(), $this->get_version( $file ) );
-		}
 	}
 
 	/**

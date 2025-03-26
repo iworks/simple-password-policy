@@ -1,0 +1,37 @@
+.simple-password-policy-requirements {
+	h2 {
+		font: {
+			size: 1.2em;
+			weight: 500;
+		}
+	}
+	ul {
+		list: {
+			decoration: none;
+		}
+		padding: {
+			bottom: 1em;
+		}
+		li {
+			margin: .2em 0;
+			display: flex;
+			align: {
+				items: center;
+			}
+			gap: 1em;
+			&:before {
+				font: {
+					size: 2em;
+				}
+				content: "●";
+				color: red;
+			}
+			&.passed {
+				opacity: .8;
+				&:before {
+					color: green;
+				}
+			}
+		}
+	}
+}

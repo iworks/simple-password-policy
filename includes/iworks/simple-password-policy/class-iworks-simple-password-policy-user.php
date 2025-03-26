@@ -46,6 +46,8 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 	/**
 	 * Function to add one column 'Password Strength Score' in user table.
 	 *
+	 * @since 1.0.0
+	 *
 	 * @param array $columns column.
 	 * @return array
 	 */
@@ -60,6 +62,8 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 
 	/**
 	 * Function to add content to custom row in user table
+	 *
+	 * @since 1.0.0
 	 *
 	 * @param string $value data to add in user table.
 	 * @param string $column_name column in which we add custom data.
@@ -90,5 +94,4 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 		return $value;
 	}
 }
-
 

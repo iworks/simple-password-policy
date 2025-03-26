@@ -42,7 +42,7 @@ class iworks_simple_password_policy_base {
 	/**
 	 * plugin version
 	 */
-	protected string $version = 'PLUGIN_VERSION';
+	protected string $version = 'PLUGIN_VERSION.BUILDTIME';
 
 	/**
 	 * plugin includes directory
@@ -144,7 +144,7 @@ class iworks_simple_password_policy_base {
 		return $this->capability;
 	}
 
-	private function slug_name( $name ) {
+	protected function slug_name( $name ) {
 		return preg_replace( '/[_ ]+/', '-', strtolower( __CLASS__ . '_' . $name ) );
 	}
 

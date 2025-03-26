@@ -42,6 +42,56 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_update_score' ), PHP_INT_MAX, 2 );
 		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_check_reason_to_change' ), PHP_INT_MAX, 2 );
 		add_action( 'init', array( $this, 'action_init_setup' ), PHP_INT_MAX );
+		add_action( 'resetpass_form', array( $this, 'action_resetpass_form_add_requirements' ) );
+		/**
+		 * Own Hooks
+		 */
+		add_filter( 'iworks/simple-password-policy/login/script', array( $this, 'filter_wp_localize_script_add_configuration' ) );
+	}
+
+	/**
+	 * add configuration to wp_localize_script object
+	 *
+	 * @since 1.0.0
+	 */
+	public function filter_wp_localize_script_add_configuration( $configuration ) {
+		$this->check_option_object();
+		foreach ( $this->conditions as $condition => $data ) {
+			if ( $data['use'] ) {
+				$data['condition']             = $condition;
+				$data['id']                    = $this->options->get_option_name( $condition );
+				$configuration['conditions'][] = $data;
+			}
+		}
+		return $configuration;
+	}
+
+	/**
+	 * ads requirements list to password create form
+	 *
+	 * @since 1.0.0
+	 */
+	public function action_resetpass_form_add_requirements() {
+		$this->check_option_object();
+		$content = '';
+		foreach ( $this->conditions as $condition => $data ) {
+			if ( $data['use'] ) {
+				$content .= sprintf(
+					'<li id="%s" data-pass="%s">%s</li>',
+					esc_attr( $this->options->get_option_name( $condition ) ),
+					esc_attr( $data['messages']['pass'] ),
+					esc_html( $data['messages']['ask'] )
+				);
+			}
+		}
+		if ( $content ) {
+			echo '<div class="simple-password-policy-requirements">';
+			printf( '<h2>%s</h2>', esc_html__( 'Password Policy Requirements', 'simple-password-policy' ) );
+			printf( '<ul id="%s">', $this->options->get_option_name( 'conditions' ) );
+			echo $content;
+			echo '</ul>';
+			echo '</div>';
+		}
 	}
 
 	/**
@@ -105,7 +155,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 			if ( $data['use'] ) {
 				if ( ! in_array( $condition, $reasons ) ) {
 					if ( isset( $data['regexp'] ) ) {
-						if ( ! preg_match( $data['regexp'], $password ) ) {
+						if ( ! preg_match( '/' . $data['regexp'] . '/', $password ) ) {
 							add_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
 						}
 					} else {
@@ -138,7 +188,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 			$text = '';
 			foreach ( $reasons as $reason ) {
 				if ( isset( $this->conditions[ $reason ] ) ) {
-					$text .= wpautop( $this->conditions[ $reason ]['message'] );
+					$text .= wpautop( $this->conditions[ $reason ]['messages']['need'] );
 					$text .= '<br>';
 				}
 			}
@@ -174,48 +224,77 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 
 	public function action_init_setup() {
 		$this->check_option_object();
-		$this->conditions = array(
+		$password_minimal_length = intval( $this->options->get_option( 'length' ) );
+		$this->conditions        = array(
 			'password_not_contain_lower_letters'      => array(
 				'option_name' => 'letters',
 				'use'         => $this->options->get_option( 'letters' ),
-				'regexp'      => '/[a-z]/',
-				'message'     => esc_html__( 'Your password must include at least one lowercase letter.', 'simple-password-policy' ),
+				'regexp'      => '[a-z]',
+				'messages'    => array(
+					'ask'  => esc_html__( 'Please include at least one lowercase letter in your password.', 'simple-password-policy' ),
+					'need' => esc_html__( 'Your password must include at least one lowercase letter.', 'simple-password-policy' ),
+					'pass' => esc_html__( 'Lowercase letters included.', 'simple-password-policy' ),
+				),
 			),
 			'password_not_contain_upper_letters'      => array(
 				'option_name' => 'letters',
 				'use'         => $this->options->get_option( 'letters' ),
-				'regexp'      => '/[A-Z]/',
-				'message'     => esc_html__( 'Your password must include at least one uppercase letter.', 'simple-password-policy' ),
+				'regexp'      => '[A-Z]',
+				'messages'    => array(
+					'ask'  => esc_html__( 'Please include at least one uppercase letter in your password.', 'simple-password-policy' ),
+					'need' => esc_html__( 'Your password must include at least one uppercase letter.', 'simple-password-policy' ),
+					'pass' => esc_html__( 'Uppercase letters included.', 'simple-password-policy' ),
+				),
 			),
 			'password_not_contain_digits'             => array(
 				'option_name' => 'digits',
 				'use'         => $this->options->get_option( 'digits' ),
-				'regexp'      => '/\d/',
-				'message'     => esc_html__( 'Your password must include at least one digit.', 'simple-password-policy' ),
+				'regexp'      => '\d',
+				'messages'    => array(
+					'ask'  => esc_html__( 'Please include at least one digit in your password.', 'simple-password-policy' ),
+					'need' => esc_html__( 'Your password must include at least one digit.', 'simple-password-policy' ),
+					'pass' => esc_html__( 'Digits included.', 'simple-password-policy' ),
+				),
 			),
 			'password_not_contain_special_characters' => array(
 				'option_name' => 'specials',
 				'use'         => $this->options->get_option( 'specials' ),
-				'regexp'      => '/[#$%^&*()+=\-\[\]\';,.\/{}|":<>?~\\\\`]/',
-				'message'     => esc_html__( 'Your password must include at least one special character.', 'simple-password-policy' ),
+				'regexp'      => '\W',
+				'messages'    => array(
+					'ask'  => esc_html__( 'Please include at least one special character in your password.', 'simple-password-policy' ),
+					'need' => esc_html__( 'Your password must include at least one special character.', 'simple-password-policy' ),
+					'pass' => esc_html__( 'Special characters included.', 'simple-password-policy' ),
+				),
 			),
 			'password_is_to_short'                    => array(
 				'option_name' => 'length',
-				'use'         => intval( $this->options->get_option( 'length' ) ),
-				'message'     => sprintf(
-					// translators: %d Minimal Password Length
-					_n(
-						'Your passwords must be at least %d character long, but longer passphrases are recommended.',
-						'Your passwords must be at least %d characters long, but longer passphrases are recommended.',
-						intval( $this->options->get_option( 'length' ) ),
-						'simple-password-policy'
+				'use'         => $password_minimal_length,
+				'messages'    => array(
+					'ask'  => sprintf(
+						// translators: %d Minimal Password Length
+						_n(
+							'Your password must be at least %d character long. Please add more characters.',
+							'Your password must be at least %d characters long. Please add more characters.',
+							$password_minimal_length,
+							'simple-password-policy'
+						),
+						$password_minimal_length
 					),
-					intval( $this->options->get_option( 'length' ) )
+					'need' => sprintf(
+						// translators: %d Minimal Password Length
+						_n(
+							'Your passwords must be at least %d character long, but longer passphrases are recommended.',
+							'Your passwords must be at least %d characters long, but longer passphrases are recommended.',
+							$password_minimal_length,
+							'simple-password-policy'
+						),
+						$password_minimal_length
+					),
+					'pass' => esc_html__( 'Password length meets the minimum requirement.', 'simple-password-policy' ),
 				),
 			),
 		);
 	}
-
 
 	/**
 	 * Function to return strength of the given password.
@@ -227,21 +306,25 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		if ( empty( $password ) ) {
 			return 0;
 		}
+		/**
+		 * it have a password!!! it is nice.
+		 */
 		$score = 1;
+		/**
+		 * Lowercase, Uppercase, Digits, Special Characters
+		 */
+		foreach ( $this->conditions as $condition => $data ) {
+			if ( isset( $data['regexp'] ) ) {
+				if ( preg_match( $data['regexp'], $password ) ) {
+					$score++;
+				}
+			}
+		}
+		/**
+		 * length
+		 */
 		if ( strlen( $password ) > 7 ) {
 			$score = $score + 2;
-		}
-		if ( preg_match( '/[a-z]/', $password ) ) {
-			$score++;
-		}
-		if ( preg_match( '/[A-Z]/', $password ) ) {
-			$score++;
-		}
-		if ( preg_match( '#[0-9]+#', $password ) ) {
-			$score++;
-		}
-		if ( preg_match( $this->conditions['password_not_contain_special_characters']['regexp'], $password ) ) {
-			$score++;
 		}
 		if ( strlen( $password ) > 12 ) {
 			$score = $score + 2;
@@ -253,33 +336,10 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 	}
 
 	/**
-	 * Function to validate password
+	 * get list of reason why password not meets policy
 	 *
-	 * @param string $password user password.
-	 * @return string message
+	 * @since 1.0.0
 	 */
-	public function validate_password( $password ) {
-		$length_pass = strlen( $password );
-		if ( ( get_site_option( 'moppm_Numeric_digit' ) === '1' ) && ( ! preg_match( '#[0-9]+#', $password ) ) ) {
-			return 'New password must contain numeric value.';
-		}
-		if ( ( get_site_option( 'moppm_letter' ) === '1' ) && ( ! preg_match( '/[a-z]/', $password ) ) ) {
-			return 'New password must contain lower case letter.';
-		}
-		if ( ( get_site_option( 'moppm_letter' ) === '1' ) && ( ! preg_match( '/[A-Z]/', $password ) ) ) {
-			return 'New password must contain upper case letter.';
-		}
-
-		if ( ( get_site_option( 'moppm_special_char' ) === '1' ) && ( ! preg_match( "/[@#$\%&\!*?()_+{:;'\><,.}]/", $password ) ) ) {
-			return 'New password must contain special character.';
-		}
-		if ( $length_pass < get_site_option( 'moppm_digit' ) ) {
-			return 'New password must contain at least ' . get_site_option( 'moppm_digit' ) . ' characters.';
-		}
-		return 'VALID';
-	}
-
-
 	private function get_user_reasons_by_user_id( $user_id ) {
 		$reasons = array();
 		$value   = get_user_meta( $user_id, $this->user_meta_name_password_reason_to_change );
@@ -298,9 +358,14 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		return $reasons;
 	}
 
+	/**
+	 * get single reason helper
+	 *
+	 * @since 1.0.0
+	 */
 	private function get_reason( $value ) {
 		if ( isset( $this->conditions[ $value ] ) ) {
-			return $values[ $value ]['message'];
+			return $values[ $value ]['messages']['need'];
 		}
 		return null;
 	}
