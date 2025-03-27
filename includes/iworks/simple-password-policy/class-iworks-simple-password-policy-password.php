@@ -39,10 +39,11 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		/**
 		 * WordPress Hooks
 		 */
-		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_update_score' ), PHP_INT_MAX, 2 );
-		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_check_reason_to_change' ), PHP_INT_MAX, 2 );
+		add_action( 'after_password_reset', array( $this, 'action_after_password_reset_check_reason_to_change' ), PHP_INT_MAX, 2 );
 		add_action( 'init', array( $this, 'action_init_setup' ), PHP_INT_MAX );
 		add_action( 'resetpass_form', array( $this, 'action_resetpass_form_add_requirements' ) );
+		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_check_reason_to_change' ), PHP_INT_MAX, 2 );
+		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_update_score' ), PHP_INT_MAX, 2 );
 		/**
 		 * Own Hooks
 		 */
@@ -98,6 +99,9 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 	 * try to count password score
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param WP_User $user     The user.
+	 * @param string  $password New user password.
 	 */
 	public function filter_wp_authenticate_user_update_score( $user, $password ) {
 		if ( is_wp_error( $user ) ) {
@@ -115,6 +119,9 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 	 * check is a reason to change a password?
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param WP_User $user     The user.
+	 * @param string  $password New user password.
 	 */
 	public function filter_wp_authenticate_user_check_reason_to_change( $user, $password ) {
 		if ( is_wp_error( $user ) ) {
@@ -142,74 +149,59 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 			return $user;
 		}
 		/**
+		 * check conditions
 		 * have user already some reasons?
 		 */
-		$reasons = get_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change );
-		if ( ! is_array( $reasons ) ) {
-			$reasons = array();
-		}
-		/**
-		 * check conditions
-		 */
-		foreach ( $this->conditions as $condition => $data ) {
-			if ( $data['use'] ) {
-				if ( ! in_array( $condition, $reasons ) ) {
-					if ( isset( $data['regexp'] ) ) {
-						if ( ! preg_match( '/' . $data['regexp'] . '/', $password ) ) {
-							add_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
-						}
-					} else {
-						switch ( $data['option_name'] ) {
-							case 'length':
-								$length = intval( $data['use'] );
-								if ( 0 < $length ) {
-									if ( strlen( $password ) < $length ) {
-										add_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
-									}
-								}
-								break;
-						}
-					}
-				}
-			} else {
-				delete_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
-			}
-		}
+		$reasons = $this->check_password_and_get_reasons( $user, $password );
 		/**
 		 * Force password reset on first login if not compliant with policy?
 		 */
 		if ( $this->options->get_option( 'force' ) ) {
-			$reasons = get_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change );
-			if ( ! empty( $reasons ) ) {
-				if ( ! is_array( $reasons ) ) {
-					$reasons = array( $reasons );
-				}
-			}
 			$text = '';
 			foreach ( $reasons as $reason ) {
 				if ( isset( $this->conditions[ $reason ] ) ) {
-					$text .= wpautop( $this->conditions[ $reason ]['messages']['need'] );
+					$text .= $this->conditions[ $reason ]['messages']['need'];
+					$text .= '<br>';
 					$text .= '<br>';
 				}
 			}
 			if ( $text ) {
 				$text .= '<br>';
-				$text .= wpautop(
+				$text .= sprintf(
+					// translators: link to "Lost your password?"
+					esc_html__( 'Please use link %s to reset your password.', 'simple-password-policy' ),
 					sprintf(
-						// translators: link to "Lost your password?"
-						esc_html__( 'Please use link %s to reset your password.', 'simple-password-policy' ),
-						sprintf(
-							'<a href="%s">%s</a>',
-							add_query_arg(
-								array(
-									'action' => 'lostpassword',
-								),
-								site_url( 'wp-login.php' )
+						'<a href="%s">%s</a>',
+						add_query_arg(
+							array(
+								'action' => 'lostpassword',
 							),
-							esc_html__( 'Lost your password?', 'simple-password-policy' )
-						)
+							site_url( 'wp-login.php' )
+						),
+						esc_html__( 'Lost your password?', 'simple-password-policy' )
 					)
 				);
+				/**
+				 * first try to go to reset password page
+				 */
+				if ( wp_redirect(
+					add_query_arg(
+						array(
+							'action'  => 'rp',
+							'key'     => get_password_reset_key( $user ),
+							'login'   => $user->user_login,
+							'wp_lang' => get_user_locale( $user ),
+							'reasons' => 'show',
+						),
+						site_url( 'wp-login.php' )
+					)
+				)
+				) {
+					exit;
+				}
+				/**
+				 * return WP_Error as fallback
+				 */
 				return new WP_Error(
 					'policy',
 					$text
@@ -315,7 +307,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		 */
 		foreach ( $this->conditions as $condition => $data ) {
 			if ( isset( $data['regexp'] ) ) {
-				if ( preg_match( $data['regexp'], $password ) ) {
+				if ( preg_match( '/' . $data['regexp'] . '/', $password ) ) {
 					$score++;
 				}
 			}
@@ -333,6 +325,28 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 			$score = $score + 2;
 		}
 		return $score;
+	}
+
+
+	/**
+	 * Check new password after the user's password is reset.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_User $user     The user.
+	 * @param string  $password New user password.
+	 */
+	public function action_after_password_reset_check_reason_to_change( $user, $password ) {
+		/**
+		 * calculate user password score
+		 */
+		if ( ! add_user_meta( $user->ID, $this->user_meta_name_password_score, $this->calculate_score( $password ), true ) ) {
+			update_user_meta( $user->ID, $this->user_meta_name_password_score, $this->calculate_score( $password ) );
+		}
+		/**
+		 * check conditions
+		 */
+		$reasons = $this->check_password_and_get_reasons( $user, $password );
 	}
 
 	/**
@@ -368,6 +382,71 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 			return $values[ $value ]['messages']['need'];
 		}
 		return null;
+	}
+
+	/**
+	 * get reasons and check user meta state
+	 *
+	 * Function saves data about password improvements.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param WP_User $user     The user.
+	 * @param string  $password New user password.
+	 */
+	private function check_password_and_get_reasons( $user, $password ) {
+		/**
+		 * get reasons
+		 */
+		$reasons = get_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change );
+		if ( empty( $reasons ) ) {
+			$reasons = array();
+		} elseif ( ! is_array( $reasons ) ) {
+			$reasons = array( $reasons );
+		}
+		/**
+		 * check conditions
+		 */
+		foreach ( $this->conditions as $condition => $data ) {
+			$delete = false;
+			if ( $data['use'] ) {
+				if ( ! in_array( $condition, $reasons ) ) {
+					if ( isset( $data['regexp'] ) ) {
+						if ( preg_match( '/' . $data['regexp'] . '/', $password ) ) {
+							$delete = true;
+						} else {
+							add_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
+						}
+					} else {
+						switch ( $data['option_name'] ) {
+							case 'length':
+								$length = intval( $data['use'] );
+								if ( 0 < $length ) {
+									if ( strlen( $password ) < $length ) {
+										add_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
+									} else {
+										$delete = true;
+									}
+								} else {
+									$delete = true;
+								}
+								break;
+						}
+					}
+				} else {
+					$delete = true;
+				}
+			} else {
+				$delete = true;
+			}
+			if ( $delete ) {
+				delete_user_meta( $user->ID, $this->user_meta_name_password_reason_to_change, $condition );
+			}
+		}
+		/**
+		 * return $reasons whatever it is
+		 */
+		return $reasons;
 	}
 }
 
