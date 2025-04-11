@@ -1,6 +1,5 @@
 === Simple Password Policy ===
 Contributors: iworks
-Donate link: https://ko-fi.com/iworks?utm_source=simple-password-policy&utm_medium=readme-donate
 Tags: PLUGIN_TAGS
 Requires at least: PLUGIN_REQUIRES_WORDPRESS
 Tested up to: PLUGIN_TESTED_WORDPRESS
@@ -12,6 +11,11 @@ License URI: https://www.gnu.org/licenses/gpl-3.0.html
 PLUGIN_TAGLINE
 
 == Description ==
+
+This plugin empowers site administrators to establish and enforce password policies for users, ensuring compliance with the defined security standards. By implementing this tool, you can effectively prevent users from choosing weak or easily guessable passwords.
+
+With this plugin, you gain the flexibility to configure various password requirements, such as complexity rules (e.g., length, character types), expiration policies, and more, enhancing the overall security of your site.
+
 
 Enhance the security of your WordPress site with the Simple Password Policy plugin. This straightforward tool allows you to enforce robust password policies for all users, significantly improving your site's protection against unauthorized access and password guessing attacks.
 
@@ -30,6 +34,10 @@ Enhance the security of your WordPress site with the Simple Password Policy plug
 = GitHub =
 
 The Simple Password Policy plugin is available also on [GitHub - Simple Password Policy](https://github.com/iworks/simple-password-policy).
+
+= How it works? =
+
+After installation, you can establish a password policy or require users to change weak passwords upon login.
 
 = See Room for Improvement? =
 
@@ -52,7 +60,7 @@ There are 3 ways to install this plugin:
 1. Search for `Simple Password Policy`.
 1. Click to install.
 1. Activate the plugin.
-1. A new menu `Simple Password Policy` will appear in your Admin.
+1. A new sub-menu `Passwords` will appear in your Admin Settings menu.
 
 = The easy way =
 
@@ -61,13 +69,13 @@ There are 3 ways to install this plugin:
 1. Select button `Upload Plugin`.
 1. Upload the .zip file you just downloaded.
 1. Activate the plugin.
-1. A new menu `Simple Password Policy` will appear in your Admin.
+1. A new sub-menu `Passwords` will appear in your Admin Settings menu.
 
 = The old and reliable way (FTP) =
 
 1. Upload `simple-password-policy` folder to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
-1. A new menu `Simple Password Policy` will appear in your Admin.
+1. A new sub-menu `Passwords` will appear in your Admin Settings menu.
 
 == Frequently Asked Questions ==
 

@@ -88,7 +88,10 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		if ( $content ) {
 			echo '<div class="simple-password-policy-requirements">';
 			printf( '<h2>%s</h2>', esc_html__( 'Password Policy Requirements', 'simple-password-policy' ) );
-			printf( '<ul id="%s">', $this->options->get_option_name( 'conditions' ) );
+			printf( '<ul id="%s">', esc_attr( $this->options->get_option_name( 'conditions' ) ) );
+			/**
+			 * this is escaped few lines above
+			 */
 			echo $content;
 			echo '</ul>';
 			echo '</div>';
