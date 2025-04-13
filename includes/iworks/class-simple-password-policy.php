@@ -44,7 +44,6 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 * WordPress Hooks
 		 */
 		add_action( 'admin_init', array( $this, 'action_admin_init' ) );
-		add_action( 'init', array( $this, 'action_init_settings' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'action_login_enqueue_scripts_enqueue_assets' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'action_login_enqueue_scripts_register_assets' ), 0 );
 		/**
@@ -131,20 +130,7 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 	}
 
 	public function action_admin_init() {
-		$this->check_option_object();
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
-	}
-
-	/**
-	 * Initialize plugin
-	 *
-	 * @since 1.0.0
-	 */
-	public function action_init_settings() {
-		/**
-		 * options
-		 */
-		$this->check_option_object();
 	}
 
 	/**

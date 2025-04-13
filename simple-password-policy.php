@@ -1,14 +1,14 @@
 <?php
 /*
-Plugin Name: Simple Password Policy
-Text Domain: simple-password-policy
-Plugin URI: PLUGIN_URI
-Description: PLUGIN_TAGLINE
-Version: PLUGIN_VERSION
-Author: Marcin Pietrzak
-Author URI: http://iworks.pl/
-License: GPLv3 or later
-License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ * Plugin Name: Simple Password Policy
+ * Text Domain: simple-password-policy
+ * Plugin URI: PLUGIN_URI
+ * Description: PLUGIN_TAGLINE
+ * Version: PLUGIN_VERSION
+ * Author: Marcin Pietrzak
+ * Author URI: http://iworks.pl/
+ * License: GPLv3 or later
+ * License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
 Copyright 2025-PLUGIN_TILL_YEAR Marcin Pietrzak (marcin@iworks.pl)
 
@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit; // Exit if accessed directly
  * static options
  */
 define( 'IWORKS_SIMPLE_PASSWORD_POLICY_VERSION', 'PLUGIN_VERSION' );
-define( 'IWORKS_SIMPLE_PASSWORD_POLICY_PREFIX', 'iworks_simple-password-policy_' );
+define( 'IWORKS_SIMPLE_PASSWORD_POLICY_PREFIX', 'iwo_spp_' );
 $base   = dirname( __FILE__ );
 $vendor = $base . '/includes';
 
