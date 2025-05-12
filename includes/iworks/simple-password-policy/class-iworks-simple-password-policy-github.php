@@ -28,6 +28,7 @@ class iworks_simple_password_policy_github {
 	private string $repository = 'iworks/simple-password-policy';
 	private string $basename   = 'simple-password-policy';
 	private $github_response;
+	private string $plugin_file = 'simple-password-policy.php';
 
 	public function __construct() {
 		/**

@@ -242,10 +242,9 @@ module.exports = function(grunt) {
 			options: {
 				bin: 'phpunit',
 				bootstrap: 'tests/php/bootstrap.php',
-				testsuite: 'default',
+				testsuite: 'testing',
 				configuration: 'tests/php/phpunit.xml',
 				colors: true,
-				tap: true,
 				staticBackup: false,
 				noGlobalsBackup: false
 			}
