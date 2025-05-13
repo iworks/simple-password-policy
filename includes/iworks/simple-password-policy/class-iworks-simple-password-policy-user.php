@@ -32,7 +32,7 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 	 *
 	 * @since 1.0.0
 	 */
-	private string $user_column_password_strength_score_name = 'simple-password-policy-password-strength-score';
+	private string $user_meta_strength_score_name = 'sppp-strength-score';
 
 	public function __construct() {
 		parent::__construct();
@@ -44,6 +44,17 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 	}
 
 	/**
+	 * Get the name of the user column used for password strength score.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The name of the user column for password strength score.
+	 */
+	public function get_user_meta_strength_score_name() {
+		return $this->user_meta_strength_score_name;
+	}
+
+	/**
 	 * Function to add one column 'Password Strength Score' in user table.
 	 *
 	 * @since 1.0.0
@@ -52,12 +63,20 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 	 * @return array
 	 */
 	public function filter_manage_users_columns_add_password_strength( $columns ) {
-		$columns[ $this->user_column_password_strength_score_name ] = esc_html__( 'Password Strength Score', 'simple-password-policy' );
+		$columns[ $this->get_user_meta_strength_score_name() ] = esc_html__( 'Password Strength Score', 'simple-password-policy' );
 		return $columns;
 	}
 
-	private function get_score_by_user_id( $user_id ) {
-		return intval( get_user_meta( $user_id, $this->user_meta_name_password_score, true ) );
+	/**
+	 * Get the password strength score for a specific user.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $user_id The ID of the user to retrieve the password strength score for.
+	 * @return int The password strength score for the user.
+	 */
+	public function get_score_by_user_id( $user_id ) {
+		return intval( get_user_meta( $user_id, $this->get_user_meta_strength_score_name(), true ) );
 	}
 
 	/**
@@ -71,7 +90,7 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 	 * @return string
 	 */
 	public function filter_manage_users_custom_column_add_password_strength( $value, $column_name, $user_id ) {
-		if ( $this->user_column_password_strength_score_name === $column_name ) {
+		if ( $this->get_user_meta_strength_score_name() === $column_name ) {
 			$score = $this->get_score_by_user_id( $user_id );
 			if ( $score ) {
 				$value  = sprintf( '<span aria-hidden="true">%d</span>', $score );

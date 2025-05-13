@@ -27,20 +27,12 @@ require_once( dirname( __DIR__ ) . '/class-simple-password-policy-base.php' );
 
 class iworks_simple_password_policy_password extends iworks_simple_password_policy_base {
 
-	/**
-	 * configuration array for conditions
-	 *
-	 * @since 1.0.0
-	 */
-	private array $conditions = array();
-
 	public function __construct() {
 		parent::__construct();
 		/**
 		 * WordPress Hooks
 		 */
 		add_action( 'after_password_reset', array( $this, 'action_after_password_reset_check_reason_to_change' ), PHP_INT_MAX, 2 );
-		add_action( 'init', array( $this, 'action_init_setup' ), PHP_INT_MAX );
 		add_action( 'resetpass_form', array( $this, 'action_resetpass_form_add_requirements' ) );
 		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_check_reason_to_change' ), PHP_INT_MAX, 2 );
 		add_filter( 'wp_authenticate_user', array( $this, 'filter_wp_authenticate_user_update_score' ), PHP_INT_MAX, 2 );
@@ -57,7 +49,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 	 */
 	public function filter_wp_localize_script_add_configuration( $configuration ) {
 		$this->check_option_object();
-		foreach ( $this->conditions as $condition => $data ) {
+		foreach ( $this->get_conditions() as $condition => $data ) {
 			if ( $data['use'] ) {
 				$data['condition']             = $condition;
 				$data['id']                    = $this->options->get_option_name( $condition );
@@ -75,7 +67,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 	public function action_resetpass_form_add_requirements() {
 		$this->check_option_object();
 		$content = '';
-		foreach ( $this->conditions as $condition => $data ) {
+		foreach ( $this->get_conditions() as $condition => $data ) {
 			if ( $data['use'] ) {
 				$content .= sprintf(
 					'<li id="%s" data-pass="%s">%s</li>',
@@ -162,8 +154,8 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		if ( $this->options->get_option( 'force' ) ) {
 			$text = '';
 			foreach ( $reasons as $reason ) {
-				if ( isset( $this->conditions[ $reason ] ) ) {
-					$text .= $this->conditions[ $reason ]['messages']['need'];
+				if ( isset( $this->get_conditions()[ $reason ] ) ) {
+					$text .= $this->get_conditions()[ $reason ]['messages']['need'];
 					$text .= '<br>';
 					$text .= '<br>';
 				}
@@ -217,77 +209,101 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		return $user;
 	}
 
-	public function action_init_setup() {
+	/**
+	 * Get the password policy conditions and their configurations.
+	 *
+	 * This method returns an array of password policy conditions with their respective configurations,
+	 * including validation rules and user-facing messages. Each condition defines a specific
+	 * password requirement such as minimum length, required character types, etc.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array {
+	 *     An associative array of password policy conditions where each key is a condition identifier
+	 *     and the value is an array containing:
+	 *     @type string   $option_name The option name this condition is associated with.
+	 *     @type bool     $use         Whether this condition is enabled.
+	 *     @type string   $regexp      Optional. Regular expression pattern to validate the condition.
+	 *     @type string[] $messages    User-facing messages for this condition with keys:
+	 *                                - 'ask':  Message shown when setting a new password.
+	 *                                - 'need': Message shown when password doesn't meet requirement.
+	 *                                - 'pass': Message shown when password meets requirement.
+	 * }
+	 */
+	public function get_conditions() {
 		$this->check_option_object();
 		$password_minimal_length = intval( $this->options->get_option( 'length' ) );
-		$this->conditions        = array(
-			'password_not_contain_lower_letters'      => array(
-				'option_name' => 'letters',
-				'use'         => $this->options->get_option( 'letters' ),
-				'regexp'      => '[a-z]',
-				'messages'    => array(
-					'ask'  => esc_html__( 'Please include at least one lowercase letter in your password.', 'simple-password-policy' ),
-					'need' => esc_html__( 'Your password must include at least one lowercase letter.', 'simple-password-policy' ),
-					'pass' => esc_html__( 'Lowercase letters included.', 'simple-password-policy' ),
-				),
-			),
-			'password_not_contain_upper_letters'      => array(
-				'option_name' => 'letters',
-				'use'         => $this->options->get_option( 'letters' ),
-				'regexp'      => '[A-Z]',
-				'messages'    => array(
-					'ask'  => esc_html__( 'Please include at least one uppercase letter in your password.', 'simple-password-policy' ),
-					'need' => esc_html__( 'Your password must include at least one uppercase letter.', 'simple-password-policy' ),
-					'pass' => esc_html__( 'Uppercase letters included.', 'simple-password-policy' ),
-				),
-			),
-			'password_not_contain_digits'             => array(
-				'option_name' => 'digits',
-				'use'         => $this->options->get_option( 'digits' ),
-				'regexp'      => '\d',
-				'messages'    => array(
-					'ask'  => esc_html__( 'Please include at least one digit in your password.', 'simple-password-policy' ),
-					'need' => esc_html__( 'Your password must include at least one digit.', 'simple-password-policy' ),
-					'pass' => esc_html__( 'Digits included.', 'simple-password-policy' ),
-				),
-			),
-			'password_not_contain_special_characters' => array(
-				'option_name' => 'specials',
-				'use'         => $this->options->get_option( 'specials' ),
-				'regexp'      => '\W',
-				'messages'    => array(
-					'ask'  => esc_html__( 'Please include at least one special character in your password.', 'simple-password-policy' ),
-					'need' => esc_html__( 'Your password must include at least one special character.', 'simple-password-policy' ),
-					'pass' => esc_html__( 'Special characters included.', 'simple-password-policy' ),
-				),
-			),
-			'password_is_to_short'                    => array(
-				'option_name' => 'length',
-				'use'         => $password_minimal_length,
-				'messages'    => array(
-					'ask'  => sprintf(
-						// translators: %d Minimal Password Length
-						_n(
-							'Your password must be at least %d character long. Please add more characters.',
-							'Your password must be at least %d characters long. Please add more characters.',
-							$password_minimal_length,
-							'simple-password-policy'
-						),
-						$password_minimal_length
+		return apply_filters(
+			'iworks/simple-password-policy/password/conditions',
+			array(
+				'password_not_contain_lower_letters'      => array(
+					'option_name' => 'letters',
+					'use'         => $this->options->get_option( 'letters' ),
+					'regexp'      => '[a-z]',
+					'messages'    => array(
+						'ask'  => esc_html__( 'Please include at least one lowercase letter in your password.', 'simple-password-policy' ),
+						'need' => esc_html__( 'Your password must include at least one lowercase letter.', 'simple-password-policy' ),
+						'pass' => esc_html__( 'Lowercase letters included.', 'simple-password-policy' ),
 					),
-					'need' => sprintf(
-						// translators: %d Minimal Password Length
-						_n(
-							'Your passwords must be at least %d character long, but longer passphrases are recommended.',
-							'Your passwords must be at least %d characters long, but longer passphrases are recommended.',
-							$password_minimal_length,
-							'simple-password-policy'
-						),
-						$password_minimal_length
-					),
-					'pass' => esc_html__( 'Password length meets the minimum requirement.', 'simple-password-policy' ),
 				),
-			),
+				'password_not_contain_upper_letters'      => array(
+					'option_name' => 'letters',
+					'use'         => $this->options->get_option( 'letters' ),
+					'regexp'      => '[A-Z]',
+					'messages'    => array(
+						'ask'  => esc_html__( 'Please include at least one uppercase letter in your password.', 'simple-password-policy' ),
+						'need' => esc_html__( 'Your password must include at least one uppercase letter.', 'simple-password-policy' ),
+						'pass' => esc_html__( 'Uppercase letters included.', 'simple-password-policy' ),
+					),
+				),
+				'password_not_contain_digits'             => array(
+					'option_name' => 'digits',
+					'use'         => $this->options->get_option( 'digits' ),
+					'regexp'      => '\d',
+					'messages'    => array(
+						'ask'  => esc_html__( 'Please include at least one digit in your password.', 'simple-password-policy' ),
+						'need' => esc_html__( 'Your password must include at least one digit.', 'simple-password-policy' ),
+						'pass' => esc_html__( 'Digits included.', 'simple-password-policy' ),
+					),
+				),
+				'password_not_contain_special_characters' => array(
+					'option_name' => 'specials',
+					'use'         => $this->options->get_option( 'specials' ),
+					'regexp'      => '\W',
+					'messages'    => array(
+						'ask'  => esc_html__( 'Please include at least one special character in your password.', 'simple-password-policy' ),
+						'need' => esc_html__( 'Your password must include at least one special character.', 'simple-password-policy' ),
+						'pass' => esc_html__( 'Special characters included.', 'simple-password-policy' ),
+					),
+				),
+				'password_is_too_short'                   => array(
+					'option_name' => 'length',
+					'use'         => $password_minimal_length,
+					'messages'    => array(
+						'ask'  => sprintf(
+							// translators: %d Minimal Password Length
+							_n(
+								'Your password must be at least %d character long. Please add more characters.',
+								'Your password must be at least %d characters long. Please add more characters.',
+								$password_minimal_length,
+								'simple-password-policy'
+							),
+							$password_minimal_length
+						),
+						'need' => sprintf(
+							// translators: %d Minimal Password Length
+							_n(
+								'Your passwords must be at least %d character long, but longer passphrases are recommended.',
+								'Your passwords must be at least %d characters long, but longer passphrases are recommended.',
+								$password_minimal_length,
+								'simple-password-policy'
+							),
+							$password_minimal_length
+						),
+						'pass' => esc_html__( 'Password length meets the minimum requirement.', 'simple-password-policy' ),
+					),
+				),
+			)
 		);
 	}
 
@@ -308,7 +324,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		/**
 		 * Lowercase, Uppercase, Digits, Special Characters
 		 */
-		foreach ( $this->conditions as $condition => $data ) {
+		foreach ( $this->get_conditions() as $condition => $data ) {
 			if ( isset( $data['regexp'] ) ) {
 				if ( preg_match( '/' . $data['regexp'] . '/', $password ) ) {
 					$score++;
@@ -381,8 +397,8 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 	 * @since 1.0.0
 	 */
 	private function get_reason( $value ) {
-		if ( isset( $this->conditions[ $value ] ) ) {
-			return $values[ $value ]['messages']['need'];
+		if ( isset( $this->get_conditions()[ $value ] ) ) {
+			return $this->get_conditions()[ $value ]['messages']['need'];
 		}
 		return null;
 	}
@@ -410,7 +426,7 @@ class iworks_simple_password_policy_password extends iworks_simple_password_poli
 		/**
 		 * check conditions
 		 */
-		foreach ( $this->conditions as $condition => $data ) {
+		foreach ( $this->get_conditions() as $condition => $data ) {
 			$delete = false;
 			if ( $data['use'] ) {
 				if ( ! in_array( $condition, $reasons ) ) {

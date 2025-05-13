@@ -15,3 +15,6 @@ assets/scripts/simple-password-policy-*.js
 
 # release
 release/
+
+# tests
+tests/php/.phpunit.result.cache
