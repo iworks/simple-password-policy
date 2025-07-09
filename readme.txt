@@ -89,6 +89,11 @@ You can do it on [Support Threads](https://wordpress.org/support/plugin/simple-p
 
 Project maintained on GitHub at [iworks/simple-password-policy](https://github.com/iworks/simple-password-policy/).
 
+== Changelog ==
+
+= 1.0.1 - 2025-07-09 =
+* **Dependencies**: Updated the [iWorks Options](https://github.com/iworks/wordpress-options-class) module to version 3.0.7 and the [iWorks Rate](https://github.com/iworks/iworks-rate) module to version 2.3.1.
+
 = 1.0.0 - 2025-03-14 =
 
 * Initial Release
