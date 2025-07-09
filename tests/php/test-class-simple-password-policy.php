@@ -28,4 +28,3 @@ class Test_Simple_Password_Policy extends WP_UnitTestCase {
 		$this->assertTrue( 0 < did_action( 'iworks/simple-password-policy/register_deactivation_hook' ) );
 	}
 }
-

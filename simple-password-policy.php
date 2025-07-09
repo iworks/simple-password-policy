@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit; // Exit if accessed directly
  */
 define( 'IWORKS_SIMPLE_PASSWORD_POLICY_VERSION', 'PLUGIN_VERSION' );
 define( 'IWORKS_SIMPLE_PASSWORD_POLICY_PREFIX', 'iwo_spp_' );
-$base   = dirname( __FILE__ );
+$base   = __DIR__;
 $vendor = $base . '/includes';
 
 /**

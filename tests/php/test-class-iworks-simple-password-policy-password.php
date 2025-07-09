@@ -43,5 +43,4 @@ class Test_Iworks_Simple_Password_Policy_Password extends WP_UnitTestCase {
 		$version = $this->password->get_version();
 		$this->assertIsString( $version );
 	}
-
 }

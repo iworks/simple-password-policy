@@ -23,4 +23,3 @@ class Test_Simple_Password_Policy_Base extends WP_UnitTestCase {
 		$this->assertTrue( true );
 	}
 }
-

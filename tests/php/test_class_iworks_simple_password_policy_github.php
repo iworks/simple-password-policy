@@ -1,11 +1,11 @@
 <?php
-class Test_Iworks_Simple_Password_Policy_Github extends WP_UnitTestCase {
+class Test_Class_Iworks_Simple_Password_Policy_Github extends WP_UnitTestCase {
 
 	protected $github;
 
 	public function setUp(): void {
 		parent::setUp();
-		$this->github = new Iworks_Simple_Password_Policy_Github();
+		$this->github = new iworks_simple_password_policy_github();
 	}
 
 	public function test_modify_transient_returns_object() {
@@ -14,4 +14,3 @@ class Test_Iworks_Simple_Password_Policy_Github extends WP_UnitTestCase {
 		$this->assertIsObject( $result );
 	}
 }
-

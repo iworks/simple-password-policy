@@ -56,4 +56,3 @@ class Test_Iworks_Simple_Password_Policy_User extends WP_UnitTestCase {
 		$this->assertIsString( $result );
 	}
 }
-
