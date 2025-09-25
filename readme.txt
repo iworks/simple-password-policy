@@ -89,8 +89,6 @@ You can do it on [Support Threads](https://wordpress.org/support/plugin/simple-p
 
 Project maintained on GitHub at [iworks/simple-password-policy](https://github.com/iworks/simple-password-policy/).
 
-== Changelog ==
-
 = 1.0.2 - 2025-09-25 =
 * **Improvement**: The admin password configuration is now available in the Users menu.
 * **Fix**: The password score is now shown on user list.
