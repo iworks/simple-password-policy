@@ -86,6 +86,11 @@ class iworks_simple_password_policy_base {
 	 */
 	protected string $user_meta_name_password_reason_to_change = 'spp_pass_reason';
 
+	/**
+	 * constructor
+	 *
+	 * @since 1.0.0
+	 */
 	public function __construct() {
 		/**
 		 * static settings
@@ -102,8 +107,8 @@ class iworks_simple_password_policy_base {
 		/**
 		 * directories and urls
 		 */
-		$this->base = dirname( __FILE__ );
-		$this->dir  = basename( dirname( dirname( $this->base ) ) );
+		$this->base = __DIR__;
+		$this->dir  = basename( dirname( $this->base, 2 ) );
 		$this->url  = plugins_url( $this->dir );
 		/**
 		 * plugin ID
@@ -119,6 +124,14 @@ class iworks_simple_password_policy_base {
 		 */
 	}
 
+	/**
+	 * Get the plugin version.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $file Optional. The file path to generate a version based on. Defaults to null.
+	 * @return string The plugin version.
+	 */
 	public function get_version( $file = null ) {
 		if ( defined( 'IWORKS_DEV_MODE' ) && IWORKS_DEV_MODE ) {
 			if ( null != $file ) {
@@ -132,26 +145,63 @@ class iworks_simple_password_policy_base {
 		return $this->version;
 	}
 
+	/**
+	 * Get the meta name for a given name.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $name The name to generate a meta name for.
+	 * @return string The meta name.
+	 */
 	protected function get_meta_name( $name ) {
 		return sprintf( '%s_%s', $this->meta_prefix, sanitize_title( $name ) );
 	}
 
-	public function get_post_type() {
-		return $this->post_type;
-	}
-
+	/**
+	 * Get the capability required to access the plugin.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return string The capability required to access the plugin.
+	 */
 	public function get_this_capability() {
 		return $this->capability;
 	}
 
+	/**
+	 * Get the slug name for a given name.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $name The name to generate a slug name for.
+	 * @return string The slug name.
+	 */
 	protected function slug_name( $name ) {
 		return preg_replace( '/[_ ]+/', '-', strtolower( __CLASS__ . '_' . $name ) );
 	}
 
+	/**
+	 * Get the post meta value for a given post ID and meta key.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int    $post_id The ID of the post to retrieve the meta value for.
+	 * @param string $meta_key The meta key to retrieve the value for.
+	 * @return mixed The meta value.
+	 */
 	public function get_post_meta( $post_id, $meta_key ) {
 		return get_post_meta( $post_id, $this->get_meta_name( $meta_key ), true );
 	}
 
+	/**
+	 * Get the module file path for a given filename and vendor.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $filename The filename of the module to retrieve the path for.
+	 * @param string $vendor Optional. The vendor of the module to retrieve the path for. Defaults to 'iworks'.
+	 * @return string The module file path.
+	 */
 	protected function get_module_file( $filename, $vendor = 'iworks' ) {
 		return realpath(
 			sprintf(
@@ -164,6 +214,13 @@ class iworks_simple_password_policy_base {
 		);
 	}
 
+	/**
+	 * HTML title
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $text The text to display in the title.
+	 */
 	protected function html_title( $text ) {
 		printf( '<h1 class="wp-heading-inline">%s</h1>', esc_html( $text ) );
 	}

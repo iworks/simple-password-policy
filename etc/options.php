@@ -11,7 +11,7 @@ function iworks_simple_password_policy_options() {
 	$options['index'] = array(
 		'version'    => '0.0',
 		'page_title' => __( 'Passwords', 'simple-password-policy' ),
-		'menu'       => 'options',
+		'menu'       => 'users',
 		'use_tabs'   => true,
 		'options'    => array(
 			array(
@@ -132,4 +132,3 @@ function iworks_simple_password_policy_options() {
 	);
 	return $options;
 }
-

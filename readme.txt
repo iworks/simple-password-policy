@@ -91,6 +91,10 @@ Project maintained on GitHub at [iworks/simple-password-policy](https://github.c
 
 == Changelog ==
 
+= 1.0.2 - 2025-09-25 =
+* **Improvement**: The admin password configuration is now available in the Users menu.
+* **Fix**: The password score is now shown on user list.
+
 = 1.0.1 - 2025-07-09 =
 * **Dependencies**: Updated the [iWorks Options](https://github.com/iworks/wordpress-options-class) module to version 3.0.7 and the [iWorks Rate](https://github.com/iworks/iworks-rate) module to version 2.3.1.
 

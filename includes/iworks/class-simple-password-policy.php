@@ -23,7 +23,7 @@ if ( class_exists( 'iworks_simple_password_policy' ) ) {
 	return;
 }
 
-require_once( dirname( __FILE__ ) . '/class-simple-password-policy-base.php' );
+require_once __DIR__ . '/class-simple-password-policy-base.php';
 
 class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 
@@ -43,24 +43,25 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		/**
 		 * WordPress Hooks
 		 */
+		add_action( 'init', array( $this, 'action_init' ), 117 );
 		add_action( 'admin_init', array( $this, 'action_admin_init' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'action_login_enqueue_scripts_enqueue_assets' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'action_login_enqueue_scripts_register_assets' ), 0 );
 		/**
 		 * load plugin classes class
 		 */
-		foreach ( array( 'user', 'password' ) as $class_key ) {
-			include_once $this->includes_directory . '/class-iworks-simple-password-policy-' . $class_key . '.php';
-			$class_name                  = sprintf( 'iworks_simple_password_policy_%s', $class_key );
-			$this->objects[ $class_key ] = new $class_name();
-		}
-		/**
-		 * load github class
-		 */
-		$filename = $this->includes_directory . '/class-iworks-simple-password-policy-github.php';
-		if ( is_file( $filename ) ) {
-			include_once $filename;
-			new iworks_simple_password_policy_github();
+		$classes = array(
+			'password',
+			'user',
+			'github',
+		);
+		foreach ( $classes as $class_key ) {
+			$filename = $this->includes_directory . '/class-iworks-simple-password-policy-' . $class_key . '.php';
+			if ( is_file( $filename ) ) {
+				include_once $filename;
+				$class_name                  = sprintf( 'iworks_simple_password_policy_%s', $class_key );
+				$this->objects[ $class_key ] = new $class_name();
+			}
 		}
 		/**
 		 * iWorks Options Class Hooks
@@ -70,6 +71,15 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		 * is active?
 		 */
 		add_filter( 'simple-password-policy/is_active', '__return_true' );
+	}
+
+	/**
+	 * init
+	 *
+	 * @since 1.0.2
+	 */
+	public function action_init() {
+		$this->check_option_object();
 	}
 
 	/**
@@ -130,6 +140,7 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 	}
 
 	public function action_admin_init() {
+		$this->check_option_object();
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
 	}
 
@@ -144,9 +155,9 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 					esc_url(
 						add_query_arg(
 							array(
-								'page' => $this->dir . '/admin/index.php',
+								'page' => 'iwo_spp_index',
 							),
-							admin_url( 'admin.php' )
+							admin_url( 'users.php' )
 						)
 					),
 					esc_html__( 'Settings', 'simple-password-policy' )
@@ -233,5 +244,4 @@ class iworks_simple_password_policy extends iworks_simple_password_policy_base {
 		}
 		return $options;
 	}
-
 }

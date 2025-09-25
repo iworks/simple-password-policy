@@ -23,17 +23,15 @@ if ( class_exists( 'iworks_simple_password_policy_user' ) ) {
 	return;
 }
 
-require_once( dirname( __DIR__ ) . '/class-simple-password-policy-base.php' );
+require_once dirname( __DIR__ ) . '/class-simple-password-policy-base.php';
 
 class iworks_simple_password_policy_user extends iworks_simple_password_policy_base {
 
 	/**
-	 * User column key for Password Strength Indicator
+	 * constructor
 	 *
 	 * @since 1.0.0
 	 */
-	private string $user_meta_strength_score_name = 'sppp-strength-score';
-
 	public function __construct() {
 		parent::__construct();
 		/**
@@ -51,7 +49,7 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 	 * @return string The name of the user column for password strength score.
 	 */
 	public function get_user_meta_strength_score_name() {
-		return $this->user_meta_strength_score_name;
+		return $this->user_meta_name_password_score;
 	}
 
 	/**
@@ -113,4 +111,3 @@ class iworks_simple_password_policy_user extends iworks_simple_password_policy_b
 		return $value;
 	}
 }
-
